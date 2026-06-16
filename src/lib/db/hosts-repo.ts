@@ -17,6 +17,8 @@ import type * as schema from "./schema";
 
 export type Db = BetterSQLite3Database<typeof schema>;
 
+export type OpStatus = "recon" | "active" | "owned" | "dismissed";
+
 /**
  * List every host inside an engagement, primary first then by IP.
  *
@@ -58,4 +60,60 @@ export function getPrimaryHost(db: Db, engagementId: number): Host {
     );
   }
   return row;
+}
+
+// ---------------------------------------------------------------------------
+// Tactical-map operator mutations (fork). Engagement-scoped guards mirror the
+// findings-repo pattern; all three are operator-owned and survive rescans.
+// ---------------------------------------------------------------------------
+
+function updateHostField(
+  db: Db,
+  engagementId: number,
+  hostId: number,
+  patch: Partial<Pick<Host, "priority" | "op_status" | "notes">>,
+): Host | null {
+  const existing = db
+    .select()
+    .from(hosts)
+    .where(and(eq(hosts.id, hostId), eq(hosts.engagement_id, engagementId)))
+    .get();
+  if (!existing) return null;
+  return db
+    .update(hosts)
+    .set(patch)
+    .where(and(eq(hosts.id, hostId), eq(hosts.engagement_id, engagementId)))
+    .returning()
+    .get();
+}
+
+/** Set operator priority (0=none,1=low,2=high,3=critical). */
+export function setHostPriority(
+  db: Db,
+  engagementId: number,
+  hostId: number,
+  priority: number,
+): Host | null {
+  const p = Math.max(0, Math.min(3, Math.trunc(priority)));
+  return updateHostField(db, engagementId, hostId, { priority: p });
+}
+
+/** Set operation status (recon|active|owned|dismissed). */
+export function setHostStatus(
+  db: Db,
+  engagementId: number,
+  hostId: number,
+  status: OpStatus,
+): Host | null {
+  return updateHostField(db, engagementId, hostId, { op_status: status });
+}
+
+/** Set host-level markdown notes. */
+export function setHostNotes(
+  db: Db,
+  engagementId: number,
+  hostId: number,
+  notes: string,
+): Host | null {
+  return updateHostField(db, engagementId, hostId, { notes });
 }

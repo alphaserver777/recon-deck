@@ -339,6 +339,21 @@ export const hosts = sqliteTable(
       .notNull()
       .default(false),
     scanned_at: text("scanned_at"),
+    /**
+     * Tactical-map operator fields (fork addition, migration 0022).
+     * Operator-owned, NOT scan-derived: the AutoRecon re-import path only
+     * updates ip/hostname/os/state, so a rescan never clobbers these.
+     */
+    /** Operator priority: 0=none, 1=low, 2=high, 3=critical. Tactical-map sort/color. */
+    priority: integer("priority").notNull().default(0),
+    /** Operation status — drives map blip color and ordering. */
+    op_status: text("op_status", {
+      enum: ["recon", "active", "owned", "dismissed"],
+    })
+      .notNull()
+      .default("recon"),
+    /** Host-level operator notes (markdown). port_notes is port-scoped; this is the host scratchpad. */
+    notes: text("notes").notNull().default(""),
   },
   (t) => [index("hosts_engagement_id_idx").on(t.engagement_id)],
 );
@@ -706,6 +721,87 @@ export const wordlist_overrides = sqliteTable("wordlist_overrides", {
 });
 
 // ---------------------------------------------------------------------------
+// creds (fork: harvested credentials per host) — migration 0023
+// ---------------------------------------------------------------------------
+
+/**
+ * Credentials discovered/captured by the operator during an engagement.
+ * Host-scoped (host_id) and optionally tied to a service/port. Operator-owned —
+ * never written by the importer, so rescans don't touch them.
+ *
+ * `kind` distinguishes a cleartext password from an NTLM/other hash or a key.
+ * `validated` tracks whether the cred was actually confirmed against the target.
+ */
+export const creds = sqliteTable(
+  "creds",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    engagement_id: integer("engagement_id")
+      .notNull()
+      .references(() => engagements.id, { onDelete: "cascade" }),
+    host_id: integer("host_id")
+      .notNull()
+      .references(() => hosts.id, { onDelete: "cascade" }),
+    /** Service label this cred belongs to (e.g. "mssql", "smb", "ssh"). Free text. */
+    service: text("service"),
+    /** Port the cred applies to, when known. */
+    port: integer("port"),
+    username: text("username").notNull().default(""),
+    /** The password / hash / key material. */
+    secret: text("secret").notNull().default(""),
+    kind: text("kind", { enum: ["pass", "hash", "key"] })
+      .notNull()
+      .default("pass"),
+    validated: text("validated", {
+      enum: ["untested", "valid", "invalid"],
+    })
+      .notNull()
+      .default("untested"),
+    created_at: text("created_at").notNull(),
+  },
+  (t) => [
+    index("creds_engagement_id_idx").on(t.engagement_id),
+    index("creds_host_id_idx").on(t.host_id),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// command_log (fork: command → result history per host) — migration 0023
+// ---------------------------------------------------------------------------
+
+/**
+ * Operator command log: what was actually run against a host/port and what
+ * came back. Distinct from `port_commands` (which stores runnable *templates*
+ * imported from AutoRecon) — this is execution *history* with results.
+ * Operator-owned; survives rescans.
+ */
+export const command_log = sqliteTable(
+  "command_log",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    engagement_id: integer("engagement_id")
+      .notNull()
+      .references(() => engagements.id, { onDelete: "cascade" }),
+    host_id: integer("host_id")
+      .notNull()
+      .references(() => hosts.id, { onDelete: "cascade" }),
+    /** Optional port association. */
+    port_id: integer("port_id").references(() => ports.id, {
+      onDelete: "set null",
+    }),
+    /** The command that was run. */
+    command: text("command").notNull(),
+    /** Short result/output paste or summary. */
+    result: text("result").notNull().default(""),
+    ts: text("ts").notNull(),
+  },
+  (t) => [
+    index("command_log_engagement_id_idx").on(t.engagement_id),
+    index("command_log_host_id_idx").on(t.host_id),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Drizzle-inferred select types
 // ---------------------------------------------------------------------------
 
@@ -744,6 +840,12 @@ export type Host = typeof hosts.$inferSelect;
 
 /** Row type for the scan_history table. */
 export type ScanHistory = typeof scan_history.$inferSelect;
+
+/** Row type for the creds table (fork). */
+export type Cred = typeof creds.$inferSelect;
+
+/** Row type for the command_log table (fork). */
+export type CommandLogEntry = typeof command_log.$inferSelect;
 
 // ---------------------------------------------------------------------------
 // app_state (v1.9.0: first-run onboarding singleton)

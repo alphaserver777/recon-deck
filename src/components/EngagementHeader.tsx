@@ -17,7 +17,7 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { RotateCw } from "lucide-react";
+import { RotateCw, Crosshair } from "lucide-react";
 import { toast } from "sonner";
 import { RescanModal } from "@/components/RescanModal";
 import { OpenInEditorLink } from "@/components/OpenInEditorLink";
@@ -362,6 +362,28 @@ export function EngagementHeader({
               Discard sample
             </button>
           )}
+          {/* fork: tactical map — network-wide command view */}
+          <Link
+            href={`/engagements/${engagementId}/map`}
+            className="inline-flex items-center gap-1.5"
+            style={{
+              height: 24,
+              padding: "0 10px",
+              borderRadius: 5,
+              background: "var(--bg-2)",
+              color: "var(--fg-muted)",
+              fontSize: 11.5,
+              fontWeight: 500,
+              border: "1px solid var(--border)",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              textDecoration: "none",
+            }}
+            title="Tactical map — network-wide command view"
+          >
+            <Crosshair size={11} />
+            Map
+          </Link>
           <button
             type="button"
             onClick={() => setRescanOpen(true)}

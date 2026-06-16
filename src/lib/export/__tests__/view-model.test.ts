@@ -97,6 +97,9 @@ function buildEngagement(): FullEngagement {
         os_accuracy: null,
         is_primary: true,
         scanned_at: null,
+        priority: 0,
+        op_status: "recon",
+        notes: "",
       },
     ],
     // Ports inserted in descending order on purpose — view model must sort ASC.

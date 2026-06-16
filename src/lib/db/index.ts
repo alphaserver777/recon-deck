@@ -43,6 +43,10 @@ export {
   type WordlistOverride,
   type Host,
   type ScanHistory,
+  creds,
+  command_log,
+  type Cred,
+  type CommandLogEntry,
 } from "./schema";
 export type {
   FullEngagement,
@@ -127,7 +131,30 @@ export {
   deleteWordlistOverride,
   isValidWordlistKey,
 } from "./wordlists-repo";
-export { listHostsForEngagement, getPrimaryHost } from "./hosts-repo";
+export {
+  listHostsForEngagement,
+  getPrimaryHost,
+  setHostPriority,
+  setHostStatus,
+  setHostNotes,
+  type OpStatus,
+} from "./hosts-repo";
+export {
+  listCreds,
+  createCred,
+  updateCred,
+  deleteCred,
+  type CredInput,
+  type CredPatch,
+  type CredKind,
+  type CredValidated,
+} from "./creds-repo";
+export {
+  listCommandLog,
+  createCommandLogEntry,
+  deleteCommandLogEntry,
+  type CommandLogInput,
+} from "./command-log-repo";
 export {
   listScanHistory,
   rescanEngagement,
