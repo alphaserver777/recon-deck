@@ -17,8 +17,18 @@ import {
   type MapHost,
   type Sev,
 } from "@/lib/tactical";
+import type { MapDefense } from "@/lib/tactical";
 import { IntelPanel } from "./IntelPanel";
+import { NetworkBrief } from "./NetworkBrief";
 import styles from "./TacticalMap.module.css";
+
+export interface NetworkIntelView {
+  organization: string;
+  domain: string;
+  scope: string;
+  budget: string;
+  notes: string;
+}
 
 const SEV_CLASS: Record<Sev, string> = {
   crit: styles.sevCrit,
@@ -26,13 +36,6 @@ const SEV_CLASS: Record<Sev, string> = {
   med: styles.sevMed,
   low: styles.sevLow,
   info: styles.sevInfo,
-};
-const CELL_SEV_CLASS: Record<Sev, string> = {
-  crit: styles.cCrit,
-  high: styles.cHigh,
-  med: styles.cMed,
-  low: styles.cLow,
-  info: styles.cInfo,
 };
 const STATUS_CLASS: Record<string, string> = {
   recon: styles.stRecon,
@@ -45,12 +48,20 @@ interface Props {
   engagementId: number;
   engagementName: string;
   hosts: MapHost[];
+  networkIntel: NetworkIntelView;
+  networkDefenses: MapDefense[];
 }
 
 // sectors that form the "domain side" the DC graph links to
 const DOMAIN_SECTORS = new Set(["COMMAND", "DATABASES", "SERVERS", "ENDPOINTS"]);
 
-export function TacticalMap({ engagementId, engagementName, hosts }: Props) {
+export function TacticalMap({
+  engagementId,
+  engagementName,
+  hosts,
+  networkIntel,
+  networkDefenses,
+}: Props) {
   const [selectedId, setSelectedId] = useState<number | null>(
     hosts.length ? hosts[0].id : null,
   );
@@ -73,29 +84,6 @@ export function TacticalMap({ engagementId, engagementName, hosts }: Props) {
     return t;
   }, [hosts]);
   const threat = totals.crit ? "CRITICAL" : totals.high ? "HIGH" : totals.med ? "ELEVATED" : "LOW";
-
-  // /24 subnet prefix = most common first-3-octets
-  const subnet = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const h of hosts) {
-      const pre = h.ip.split(".").slice(0, 3).join(".");
-      counts.set(pre, (counts.get(pre) ?? 0) + 1);
-    }
-    let best = "";
-    let bestN = -1;
-    for (const [k, n] of counts) if (n > bestN) ((best = k), (bestN = n));
-    return best;
-  }, [hosts]);
-
-  const hostByOctet = useMemo(() => {
-    const m = new Map<number, MapHost>();
-    for (const h of hosts) {
-      if (h.ip.split(".").slice(0, 3).join(".") !== subnet) continue;
-      const oct = Number(h.ip.split(".").pop());
-      if (Number.isInteger(oct)) m.set(oct, h);
-    }
-    return m;
-  }, [hosts, subnet]);
 
   const onSelect = useCallback((h: MapHost, ev?: React.MouseEvent) => {
     if (ev) {
@@ -204,37 +192,13 @@ export function TacticalMap({ engagementId, engagementName, hosts }: Props) {
 
       <div className={styles.body}>
         <div className={styles.mapArea}>
-          {/* minimap /24 */}
-          <div className={styles.minimap}>
-            <div className={styles.minimapHead}>
-              <b>МИНИ-КАРТА</b>
-              <span>{subnet}.0/24 · {hostByOctet.size} живых</span>
-            </div>
-            <div className={styles.grid24}>
-              {Array.from({ length: 256 }, (_, i) => {
-                const h = hostByOctet.get(i);
-                if (!h) {
-                  return <div key={i} className={styles.cell} title={`${subnet}.${i}`} />;
-                }
-                const sev = topSev(h.counts);
-                const cls =
-                  h.opStatus === "owned"
-                    ? styles.cOwned
-                    : CELL_SEV_CLASS[sev];
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    className={`${styles.cell} ${styles.cellLive} ${cls} ${
-                      h.id === selectedId ? styles.cellSelected : ""
-                    }`}
-                    title={`${h.ip} — ${h.roleLabel}`}
-                    onClick={(e) => onSelect(h, e)}
-                  />
-                );
-              })}
-            </div>
-          </div>
+          {/* operation brief (replaces minimap) */}
+          <NetworkBrief
+            engagementId={engagementId}
+            intel={networkIntel}
+            defenses={networkDefenses}
+            hostCount={hosts.length}
+          />
 
           {/* sectors with operation graph overlay */}
           <div className={styles.sectors} ref={sectorsRef}>

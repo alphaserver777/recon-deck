@@ -16,13 +16,20 @@ import {
   setPriorityAction,
   setStatusAction,
   setNotesAction,
+  setIconAction,
   addCredAction,
   updateCredAction,
   deleteCredAction,
   addCommandAction,
   deleteCommandAction,
 } from "../../../app/(app)/engagements/[id]/map/actions";
+import { DefensesEditor } from "./DefensesEditor";
 import styles from "./TacticalMap.module.css";
+
+const ICON_PALETTE = [
+  "👑", "🗄️", "🛰️", "🔧", "💾", "🖥️", "🖨️", "📹", "📡",
+  "🛡️", "🔥", "🗝️", "💀", "🎯", "🌐", "📟", "🧱", "⚙️", "🐧", "🪟",
+];
 
 const SEV_LABEL: Record<Sev, string> = {
   crit: "CRIT",
@@ -83,6 +90,30 @@ export function IntelPanel({
         <div className={styles.intelOs}>{host.osName || ""}</div>
       </div>
 
+      {/* icon picker */}
+      <div className={styles.iconPicker}>
+        {ICON_PALETTE.map((ic) => (
+          <button
+            key={ic}
+            type="button"
+            className={`${styles.iconOpt} ${host.icon === ic ? styles.iconOptOn : ""}`}
+            onClick={() => startTransition(() => setIconAction(engagementId, host.id, ic))}
+          >
+            {ic}
+          </button>
+        ))}
+        {host.iconOverride && (
+          <button
+            type="button"
+            className={styles.iconOpt}
+            title="сбросить к иконке роли"
+            onClick={() => startTransition(() => setIconAction(engagementId, host.id, ""))}
+          >
+            ↺
+          </button>
+        )}
+      </div>
+
       {/* priority + status */}
       <div className={styles.secT}>ОПЕРАЦИЯ</div>
       <div className={styles.controls}>
@@ -134,6 +165,15 @@ export function IntelPanel({
           <div className={styles.nx}>▶ {f.next}</div>
         </div>
       ))}
+
+      {/* defenses (СЗИ / САВЗ) on this host */}
+      <div className={styles.secT}>СРЕДСТВА ЗАЩИТЫ ({host.defenses.length})</div>
+      <DefensesEditor
+        engagementId={engagementId}
+        hostId={host.id}
+        defenses={host.defenses}
+        compact
+      />
 
       {/* credentials */}
       <CredsSection engagementId={engagementId} host={host} pendingWrap={startTransition} />

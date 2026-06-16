@@ -14,12 +14,15 @@ import {
   listFindings,
   listCreds,
   listCommandLog,
+  getNetworkIntel,
+  listDefenses,
 } from "@/lib/db";
 import {
   buildMapHost,
   sortMapHosts,
   normalizeSeverity,
   type MapHost,
+  type MapDefense,
   type TacticalFinding,
 } from "@/lib/tactical";
 import { TacticalMap } from "@/components/tactical/TacticalMap";
@@ -39,6 +42,17 @@ export default async function MapPage({ params }: PageProps) {
   const findings = listFindings(db, engagementId);
   const creds = listCreds(db, engagementId);
   const cmdlog = listCommandLog(db, engagementId);
+  const networkIntel = getNetworkIntel(db, engagementId);
+  const allDefenses = listDefenses(db, engagementId);
+  const mapDefense = (d: (typeof allDefenses)[number]): MapDefense => ({
+    id: d.id,
+    category: d.category,
+    product: d.product,
+    detail: d.detail,
+  });
+  const networkDefenses = allDefenses
+    .filter((d) => d.host_id === null)
+    .map(mapDefense);
 
   const hosts: MapHost[] = eng.hosts.map((h) => {
     const hostPorts = eng.ports
@@ -78,8 +92,10 @@ export default async function MapPage({ params }: PageProps) {
       priority: h.priority,
       opStatus: h.op_status,
       notes: h.notes,
+      iconOverride: h.icon,
       ports: hostPorts,
       manualFindings: manual,
+      defenses: allDefenses.filter((d) => d.host_id === h.id).map(mapDefense),
       creds: creds
         .filter((c) => c.host_id === h.id)
         .map((c) => ({
@@ -110,6 +126,14 @@ export default async function MapPage({ params }: PageProps) {
       engagementId={engagementId}
       engagementName={eng.name}
       hosts={sorted}
+      networkIntel={{
+        organization: networkIntel.organization,
+        domain: networkIntel.domain,
+        scope: networkIntel.scope,
+        budget: networkIntel.budget,
+        notes: networkIntel.notes,
+      }}
+      networkDefenses={networkDefenses}
     />
   );
 }

@@ -15,14 +15,21 @@ import {
   setHostPriority,
   setHostStatus,
   setHostNotes,
+  setHostIcon,
   createCred,
   updateCred,
   deleteCred,
   createCommandLogEntry,
   deleteCommandLogEntry,
+  upsertNetworkIntel,
+  createDefense,
+  deleteDefense,
+  DEFENSE_CATEGORIES,
   type OpStatus,
   type CredKind,
   type CredValidated,
+  type DefenseCategory,
+  type NetworkIntelPatch,
 } from "@/lib/db";
 
 function validateId(value: unknown, name: string): number {
@@ -75,6 +82,66 @@ export async function setNotesAction(
   const eid = validateId(engagementId, "engagementId");
   const hid = validateId(hostId, "hostId");
   setHostNotes(db, eid, hid, typeof notes === "string" ? notes : "");
+  revalidateMap(eid);
+}
+
+export async function setIconAction(
+  engagementId: number,
+  hostId: number,
+  icon: string,
+): Promise<void> {
+  const eid = validateId(engagementId, "engagementId");
+  const hid = validateId(hostId, "hostId");
+  setHostIcon(db, eid, hid, typeof icon === "string" ? icon : "");
+  revalidateMap(eid);
+}
+
+// --- network intel (operation brief) ---------------------------------------
+
+export async function saveNetworkIntelAction(
+  engagementId: number,
+  patch: NetworkIntelPatch,
+): Promise<void> {
+  const eid = validateId(engagementId, "engagementId");
+  const clean: NetworkIntelPatch = {};
+  for (const k of ["organization", "domain", "scope", "budget", "notes"] as const) {
+    if (typeof patch[k] === "string") clean[k] = patch[k];
+  }
+  upsertNetworkIntel(db, eid, clean);
+  revalidateMap(eid);
+}
+
+// --- defenses (СЗИ / САВЗ) -------------------------------------------------
+
+export async function addDefenseAction(
+  engagementId: number,
+  hostId: number | null,
+  category: string,
+  product: string,
+  detail: string,
+): Promise<void> {
+  const eid = validateId(engagementId, "engagementId");
+  if (!product || !product.trim()) throw new Error("Empty product.");
+  const cat = DEFENSE_CATEGORIES.includes(category as DefenseCategory)
+    ? (category as DefenseCategory)
+    : "other";
+  createDefense(db, {
+    engagementId: eid,
+    hostId: hostId == null ? null : validateId(hostId, "hostId"),
+    category: cat,
+    product,
+    detail: typeof detail === "string" ? detail : "",
+  });
+  revalidateMap(eid);
+}
+
+export async function deleteDefenseAction(
+  engagementId: number,
+  defenseId: number,
+): Promise<void> {
+  const eid = validateId(engagementId, "engagementId");
+  const did = validateId(defenseId, "defenseId");
+  deleteDefense(db, eid, did);
   revalidateMap(eid);
 }
 

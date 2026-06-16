@@ -169,6 +169,13 @@
       "when": 1779300000000,
       "tag": "0023_add-creds-and-command-log",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1779400000000,
+      "tag": "0024_add-network-intel-defenses-icon",
+      "breakpoints": true
     }
   ]
 }

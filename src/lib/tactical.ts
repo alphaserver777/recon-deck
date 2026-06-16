@@ -240,6 +240,13 @@ export interface MapCmd {
   ts: string;
 }
 
+export interface MapDefense {
+  id: number;
+  category: string;
+  product: string;
+  detail: string;
+}
+
 export interface MapHost {
   id: number;
   ip: string;
@@ -253,12 +260,15 @@ export interface MapHost {
   roleLabel: string;
   sector: SectorKey;
   icon: string;
+  /** Operator icon override, if any (else role-derived icon is used). */
+  iconOverride: string;
   ports: MapPort[];
   findings: TacticalFinding[];
   counts: SevCounts;
   maxsev: number;
   creds: MapCred[];
   commandLog: MapCmd[];
+  defenses: MapDefense[];
 }
 
 export interface BuildMapHostInput {
@@ -270,11 +280,14 @@ export interface BuildMapHostInput {
   priority: number;
   opStatus: string;
   notes: string;
+  /** Operator icon override (emoji/char); empty = role default. */
+  iconOverride?: string;
   ports: MapPort[];
   /** Manual findings (from recon-deck `findings` table) already mapped to Sev. */
   manualFindings: TacticalFinding[];
   creds: MapCred[];
   commandLog: MapCmd[];
+  defenses: MapDefense[];
 }
 
 /** Assemble a full tactical view-model for one host. Pure. */
@@ -282,6 +295,7 @@ export function buildMapHost(input: BuildMapHostInput): MapHost {
   const portNums = input.ports.map((p) => p.port);
   const role = roleOf(portNums, input.osName);
   const def = ROLES[role];
+  const iconOverride = (input.iconOverride ?? "").trim();
 
   // derived (port/OS) findings + operator-entered manual findings, deduped
   const derived = findingsFor(portNums, input.osName);
@@ -311,13 +325,15 @@ export function buildMapHost(input: BuildMapHostInput): MapHost {
     role,
     roleLabel: def.label,
     sector: def.sector,
-    icon: def.icon,
+    icon: iconOverride || def.icon,
+    iconOverride,
     ports: input.ports.sort((a, b) => a.port - b.port),
     findings: merged,
     counts,
     maxsev,
     creds: input.creds,
     commandLog: input.commandLog,
+    defenses: input.defenses,
   };
 }
 

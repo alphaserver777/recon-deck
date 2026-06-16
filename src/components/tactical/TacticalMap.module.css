@@ -513,6 +513,121 @@
   background: var(--t-owned);
 }
 
+/* operation brief (replaces minimap) */
+.brief {
+  position: relative;
+  z-index: 3;
+  margin-bottom: 14px;
+  border: 1px solid var(--t-line);
+  border-radius: 6px;
+  background: #0b131b99;
+  padding: 12px 14px;
+}
+.brief::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(var(--t-accent), transparent);
+  opacity: 0.6;
+}
+.briefHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 10px 2px;
+}
+.briefHead b {
+  letter-spacing: 2px;
+  color: #bfe6ff;
+  font-size: 13px;
+}
+.briefHead span {
+  font-size: 10px;
+  color: var(--t-dim);
+}
+.briefGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.fieldWide {
+  grid-column: 1 / -1;
+}
+.fieldLabel {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--t-dim);
+  text-transform: uppercase;
+}
+.fieldInput {
+  background: #0c1620;
+  border: 1px solid var(--t-line);
+  border-radius: 3px;
+  color: var(--t-txt);
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 7px;
+}
+.fieldInput:focus {
+  outline: none;
+  border-color: var(--t-accent);
+}
+.fieldArea {
+  min-height: 44px;
+  resize: vertical;
+}
+
+/* defense (СЗИ/САВЗ) chips */
+.defenses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 4px;
+}
+.defChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  background: #14202b;
+  border: 1px solid var(--t-line);
+  border-left: 3px solid var(--t-owned);
+  border-radius: 3px;
+  padding: 3px 7px;
+}
+.defCat {
+  font-size: 8px;
+  letter-spacing: 1px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: var(--t-owned);
+}
+.defProduct {
+  color: #eaf6ff;
+  font-weight: bold;
+}
+.defDetail {
+  color: var(--t-dim);
+  font-size: 10px;
+}
+.defDel {
+  background: none;
+  border: none;
+  color: var(--t-crit);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 2px;
+}
+
 /* intel drawer */
 .intel {
   border-left: 1px solid var(--t-line);
@@ -603,6 +718,36 @@
   border-radius: 3px;
   padding: 1px 6px;
   color: #9fc4dc;
+}
+
+/* icon picker */
+.iconPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin: 6px 0 2px;
+}
+.iconOpt {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  background: #0c1620;
+  border: 1px solid var(--t-line);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.iconOpt:hover {
+  border-color: var(--t-accent);
+}
+.iconOptOn {
+  border-color: var(--t-accent);
+  box-shadow: 0 0 0 1px var(--t-accent);
+  background: #11212e;
 }
 
 /* editable controls */

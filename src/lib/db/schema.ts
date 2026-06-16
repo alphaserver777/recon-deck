@@ -354,6 +354,11 @@ export const hosts = sqliteTable(
       .default("recon"),
     /** Host-level operator notes (markdown). port_notes is port-scoped; this is the host scratchpad. */
     notes: text("notes").notNull().default(""),
+    /**
+     * Operator icon override (emoji/char) for the tactical map, migration 0024.
+     * Empty = fall back to the role-derived icon. Operator-owned (rescan-safe).
+     */
+    icon: text("icon").notNull().default(""),
   },
   (t) => [index("hosts_engagement_id_idx").on(t.engagement_id)],
 );
@@ -802,6 +807,68 @@ export const command_log = sqliteTable(
 );
 
 // ---------------------------------------------------------------------------
+// network_intel (fork: engagement-level operation brief) — migration 0024
+// ---------------------------------------------------------------------------
+
+/**
+ * One row per engagement holding network-wide recon intel the operator records
+ * by hand: target organisation, AD domain, in-scope routes/subnets, engagement
+ * budget, and a free markdown notes field. Operator-owned; never written by the
+ * importer. PK = engagement_id (1:1 with the engagement).
+ */
+export const network_intel = sqliteTable("network_intel", {
+  engagement_id: integer("engagement_id")
+    .primaryKey()
+    .references(() => engagements.id, { onDelete: "cascade" }),
+  organization: text("organization").notNull().default(""),
+  domain: text("domain").notNull().default(""),
+  /** In-scope routes / subnets / CIDR. */
+  scope: text("scope").notNull().default(""),
+  /** Engagement budget / value ($). Free text. */
+  budget: text("budget").notNull().default(""),
+  /** Free markdown for everything else. */
+  notes: text("notes").notNull().default(""),
+  updated_at: text("updated_at").notNull(),
+});
+
+// ---------------------------------------------------------------------------
+// defenses (fork: discovered security controls — СЗИ / САВЗ) — migration 0024
+// ---------------------------------------------------------------------------
+
+/**
+ * Defensive products discovered during recon: antivirus (САВЗ), EDR, firewall,
+ * SIEM, DLP, IPS and other infosec controls (СЗИ). `host_id` nullable for
+ * network-level controls (perimeter firewall, central SIEM, …). Operator-owned.
+ */
+export const defenses = sqliteTable(
+  "defenses",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    engagement_id: integer("engagement_id")
+      .notNull()
+      .references(() => engagements.id, { onDelete: "cascade" }),
+    /** Null = network-level control (not tied to a single host). */
+    host_id: integer("host_id").references(() => hosts.id, {
+      onDelete: "cascade",
+    }),
+    category: text("category", {
+      enum: ["savz", "edr", "fw", "ips", "siem", "dlp", "waf", "nac", "other"],
+    })
+      .notNull()
+      .default("other"),
+    /** Product name (e.g. "Kaspersky", "Microsoft Defender", "Secret Net"). */
+    product: text("product").notNull().default(""),
+    /** Version / evidence / where it was seen. */
+    detail: text("detail").notNull().default(""),
+    created_at: text("created_at").notNull(),
+  },
+  (t) => [
+    index("defenses_engagement_id_idx").on(t.engagement_id),
+    index("defenses_host_id_idx").on(t.host_id),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Drizzle-inferred select types
 // ---------------------------------------------------------------------------
 
@@ -846,6 +913,12 @@ export type Cred = typeof creds.$inferSelect;
 
 /** Row type for the command_log table (fork). */
 export type CommandLogEntry = typeof command_log.$inferSelect;
+
+/** Row type for the network_intel table (fork). */
+export type NetworkIntel = typeof network_intel.$inferSelect;
+
+/** Row type for the defenses table (fork). */
+export type Defense = typeof defenses.$inferSelect;
 
 // ---------------------------------------------------------------------------
 // app_state (v1.9.0: first-run onboarding singleton)

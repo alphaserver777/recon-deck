@@ -45,8 +45,12 @@ export {
   type ScanHistory,
   creds,
   command_log,
+  network_intel,
+  defenses,
   type Cred,
   type CommandLogEntry,
+  type NetworkIntel,
+  type Defense,
 } from "./schema";
 export type {
   FullEngagement,
@@ -137,8 +141,22 @@ export {
   setHostPriority,
   setHostStatus,
   setHostNotes,
+  setHostIcon,
   type OpStatus,
 } from "./hosts-repo";
+export {
+  getNetworkIntel,
+  upsertNetworkIntel,
+  type NetworkIntelPatch,
+} from "./network-intel-repo";
+export {
+  listDefenses,
+  createDefense,
+  deleteDefense,
+  DEFENSE_CATEGORIES,
+  type DefenseCategory,
+  type DefenseInput,
+} from "./defenses-repo";
 export {
   listCreds,
   createCred,

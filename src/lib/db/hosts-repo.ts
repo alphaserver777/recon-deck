@@ -71,7 +71,7 @@ function updateHostField(
   db: Db,
   engagementId: number,
   hostId: number,
-  patch: Partial<Pick<Host, "priority" | "op_status" | "notes">>,
+  patch: Partial<Pick<Host, "priority" | "op_status" | "notes" | "icon">>,
 ): Host | null {
   const existing = db
     .select()
@@ -116,4 +116,14 @@ export function setHostNotes(
   notes: string,
 ): Host | null {
   return updateHostField(db, engagementId, hostId, { notes });
+}
+
+/** Set per-host icon override (emoji/char). Empty string = role default. */
+export function setHostIcon(
+  db: Db,
+  engagementId: number,
+  hostId: number,
+  icon: string,
+): Host | null {
+  return updateHostField(db, engagementId, hostId, { icon: icon.slice(0, 8) });
 }

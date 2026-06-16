@@ -338,6 +338,7 @@ const primaryHost = {
   priority: 0,
   op_status: "recon" as const,
   notes: "",
+  icon: "",
 };
 
 // Ports inserted in REVERSE order so Plan 01's ascending sort is observable.
@@ -550,6 +551,7 @@ export function buildMultiHostFixtureViewModel(): EngagementViewModel {
       priority: 0,
       op_status: "recon",
       notes: "",
+      icon: "",
     },
     ports: [secondaryPortVm],
     hostScripts: [],
