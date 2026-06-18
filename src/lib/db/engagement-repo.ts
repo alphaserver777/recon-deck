@@ -17,7 +17,7 @@ import "server-only";
  */
 
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
-import { eq, sql, desc, and } from "drizzle-orm";
+import { eq, sql, desc, and, isNull } from "drizzle-orm";
 import {
   engagements,
   ports,
@@ -531,6 +531,31 @@ export function getById(db: Db, id: number): FullEngagement | null {
  */
 export function listSummaries(db: Db): EngagementSummary[] {
   return querySummaries(db, /* deletedOnly */ false);
+}
+
+/**
+ * Find the most recent non-deleted engagement whose name matches a subnet tag.
+ * Used by the import route to upsert: re-scan existing engagement if the same
+ * subnet was scanned before, preserving operator data (creds/notes/defenses).
+ */
+export function findEngagementBySubnet(
+  db: Db,
+  subnet: string,
+): number | null {
+  const tag = subnet.trim();
+  if (!tag) return null;
+  const row = db
+    .select({ id: engagements.id })
+    .from(engagements)
+    .where(
+      and(
+        eq(engagements.name, tag),
+        isNull(engagements.deleted_at),
+      ),
+    )
+    .orderBy(desc(engagements.id))
+    .get();
+  return row?.id ?? null;
 }
 
 interface SummaryRow {

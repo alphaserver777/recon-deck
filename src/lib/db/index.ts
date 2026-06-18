@@ -45,10 +45,12 @@ export {
   type ScanHistory,
   creds,
   command_log,
+  timeline_notes,
   network_intel,
   defenses,
   type Cred,
   type CommandLogEntry,
+  type TimelineNote,
   type NetworkIntel,
   type Defense,
 } from "./schema";
@@ -63,6 +65,7 @@ export type {
 export {
   createFromScan,
   getById,
+  findEngagementBySubnet,
   listSummaries,
   updateTarget,
   renameEngagement,
@@ -142,6 +145,8 @@ export {
   setHostStatus,
   setHostNotes,
   setHostIcon,
+  setHostOsName,
+  setHostSector,
   type OpStatus,
 } from "./hosts-repo";
 export {
@@ -170,9 +175,16 @@ export {
 export {
   listCommandLog,
   createCommandLogEntry,
+  updateCommandLogEntry,
   deleteCommandLogEntry,
   type CommandLogInput,
+  type CommandLogPatch,
 } from "./command-log-repo";
+export {
+  listTimelineNotes,
+  createTimelineNote,
+  deleteTimelineNote,
+} from "./timeline-notes-repo";
 export {
   listScanHistory,
   rescanEngagement,

@@ -12,11 +12,15 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { MapHost, Sev } from "@/lib/tactical";
+import { SECTORS } from "@/lib/tactical";
+import { RoleIcon, ROLE_COLOR } from "./RoleIcon";
 import {
   setPriorityAction,
   setStatusAction,
   setNotesAction,
   setIconAction,
+  setOsNameAction,
+  setSectorAction,
   addCredAction,
   updateCredAction,
   deleteCredAction,
@@ -82,36 +86,43 @@ export function IntelPanel({
     <aside className={styles.intel} style={{ opacity: pending ? 0.7 : 1 }}>
       <div className={styles.intelHead}>
         <h2>
-          <span>{host.icon}</span> {host.ip}
+          <span className={styles.intelIco} style={{ background: ROLE_COLOR[host.role] || "#48bfe3" }}>
+            <RoleIcon role={host.role} size={22} />
+          </span>
+          {host.ip}
         </h2>
         <div className={styles.intelMeta}>
           {(host.hostname || "—")} · {host.roleLabel}
         </div>
-        <div className={styles.intelOs}>{host.osName || ""}</div>
-      </div>
-
-      {/* icon picker */}
-      <div className={styles.iconPicker}>
-        {ICON_PALETTE.map((ic) => (
-          <button
-            key={ic}
-            type="button"
-            className={`${styles.iconOpt} ${host.icon === ic ? styles.iconOptOn : ""}`}
-            onClick={() => startTransition(() => setIconAction(engagementId, host.id, ic))}
+        <div className={styles.controls} style={{ marginTop: 4 }}>
+          <span style={{ fontSize: 9, color: "var(--t-dim)", letterSpacing: 1 }}>СЕКТОР</span>
+          <select
+            className={styles.select}
+            value={host.sectorOverride || host.sector}
+            onChange={(e) => {
+              const val = e.target.value;
+              startTransition(() => setSectorAction(engagementId, host.id, val === host.sector && !host.sectorOverride ? "" : val));
+            }}
           >
-            {ic}
-          </button>
-        ))}
-        {host.iconOverride && (
-          <button
-            type="button"
-            className={styles.iconOpt}
-            title="сбросить к иконке роли"
-            onClick={() => startTransition(() => setIconAction(engagementId, host.id, ""))}
-          >
-            ↺
-          </button>
-        )}
+            {SECTORS.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.title}
+              </option>
+            ))}
+          </select>
+          {host.sectorOverride && (
+            <button
+              type="button"
+              className={styles.btn}
+              style={{ fontSize: 9, padding: "2px 6px" }}
+              title="вернуть авто-определение"
+              onClick={() => startTransition(() => setSectorAction(engagementId, host.id, ""))}
+            >
+              ↺
+            </button>
+          )}
+        </div>
+        <OsEditor engagementId={engagementId} host={host} pendingWrap={startTransition} />
       </div>
 
       {/* priority + status */}
@@ -344,6 +355,64 @@ function CmdLogSection({
         </button>
       </div>
     </>
+  );
+}
+
+function OsEditor({
+  engagementId,
+  host,
+  pendingWrap,
+}: {
+  engagementId: number;
+  host: MapHost;
+  pendingWrap: Wrap;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(host.osName || "");
+  const lastHostId = useRef(host.id);
+  useEffect(() => {
+    if (lastHostId.current !== host.id) {
+      lastHostId.current = host.id;
+      setVal(host.osName || "");
+      setEditing(false);
+    }
+  }, [host.id, host.osName]);
+
+  const save = () => {
+    const trimmed = val.trim();
+    if (trimmed !== (host.osName || "")) {
+      pendingWrap(() => setOsNameAction(engagementId, host.id, trimmed));
+    }
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className={styles.osEdit}>
+        <span className={styles.osEditIco}>{host.osIconStr}</span>
+        <input
+          className={styles.input}
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          onBlur={save}
+          onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+          autoFocus
+          placeholder="Windows Server 2019, Linux 5.15…"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={styles.intelOs}
+      onClick={() => { setVal(host.osName || ""); setEditing(true); }}
+      title="кликни — изменить ОС"
+    >
+      {host.osIconStr && <span className={styles.osEditIco}>{host.osIconStr}</span>}
+      {host.osName || "ОС не определена — кликни для ввода"}
+      <span className={styles.osEditPen}> ✎</span>
+    </div>
   );
 }
 

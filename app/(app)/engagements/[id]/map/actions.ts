@@ -16,6 +16,8 @@ import {
   setHostStatus,
   setHostNotes,
   setHostIcon,
+  setHostOsName,
+  setHostSector,
   createCred,
   updateCred,
   deleteCred,
@@ -93,6 +95,28 @@ export async function setIconAction(
   const eid = validateId(engagementId, "engagementId");
   const hid = validateId(hostId, "hostId");
   setHostIcon(db, eid, hid, typeof icon === "string" ? icon : "");
+  revalidateMap(eid);
+}
+
+export async function setOsNameAction(
+  engagementId: number,
+  hostId: number,
+  osName: string,
+): Promise<void> {
+  const eid = validateId(engagementId, "engagementId");
+  const hid = validateId(hostId, "hostId");
+  setHostOsName(db, eid, hid, typeof osName === "string" ? osName : "");
+  revalidateMap(eid);
+}
+
+export async function setSectorAction(
+  engagementId: number,
+  hostId: number,
+  sector: string,
+): Promise<void> {
+  const eid = validateId(engagementId, "engagementId");
+  const hid = validateId(hostId, "hostId");
+  setHostSector(db, eid, hid, typeof sector === "string" ? sector : "");
   revalidateMap(eid);
 }
 

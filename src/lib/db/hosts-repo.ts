@@ -71,7 +71,7 @@ function updateHostField(
   db: Db,
   engagementId: number,
   hostId: number,
-  patch: Partial<Pick<Host, "priority" | "op_status" | "notes" | "icon">>,
+  patch: Partial<Pick<Host, "priority" | "op_status" | "notes" | "icon" | "os_name" | "sector">>,
 ): Host | null {
   const existing = db
     .select()
@@ -126,4 +126,24 @@ export function setHostIcon(
   icon: string,
 ): Host | null {
   return updateHostField(db, engagementId, hostId, { icon: icon.slice(0, 8) });
+}
+
+/** Set manual sector override (drag-and-drop). Empty = auto-derived. */
+export function setHostSector(
+  db: Db,
+  engagementId: number,
+  hostId: number,
+  sector: string,
+): Host | null {
+  return updateHostField(db, engagementId, hostId, { sector: sector || "" });
+}
+
+/** Set host OS name (operator correction of auto-detected value). */
+export function setHostOsName(
+  db: Db,
+  engagementId: number,
+  hostId: number,
+  osName: string,
+): Host | null {
+  return updateHostField(db, engagementId, hostId, { os_name: osName || null });
 }

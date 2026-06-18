@@ -80,6 +80,35 @@ export const ROLES: Record<RoleKey, RoleDef> = {
 const EOL_RE =
   /Windows (Server )?(2000|2003|2008|XP|Vista|NT)\b|Windows 7\b/i;
 
+export function osIcon(osName: string | null): string {
+  if (!osName) return "";
+  const os = osName.toLowerCase();
+  if (os.includes("windows")) return "🪟";
+  if (os.includes("linux") || os.includes("ubuntu") || os.includes("debian") || os.includes("centos") || os.includes("rhel") || os.includes("fedora")) return "🐧";
+  if (os.includes("macos") || os.includes("mac os") || os.includes("darwin")) return "🍎";
+  if (os.includes("freebsd")) return "😈";
+  if (os.includes("android")) return "🤖";
+  if (os.includes("ios") || os.includes("iphone")) return "📱";
+  if (os.includes("vmware") || os.includes("esxi")) return "☁️";
+  if (os.includes("fortinet") || os.includes("fortigate") || os.includes("fortiOS")) return "🛡️";
+  if (os.includes("cisco")) return "🌐";
+  if (os.includes("mikrotik")) return "📡";
+  if (os.includes("lwip") || os.includes("embedded")) return "⚙️";
+  return "💻";
+}
+
+export function osShort(osName: string | null): string {
+  if (!osName) return "";
+  const s = osName
+    .replace(/Microsoft /i, "")
+    .replace(/\bBuild \d+/i, "")
+    .replace(/Service Pack \d/i, "SP")
+    .replace(/\(.*?\)/g, "")
+    .trim();
+  if (s.length > 24) return s.slice(0, 22) + "…";
+  return s;
+}
+
 export interface TacticalPort {
   port: number;
   service?: string | null;
@@ -252,6 +281,8 @@ export interface MapHost {
   ip: string;
   hostname: string | null;
   osName: string | null;
+  osIconStr: string;
+  osShortStr: string;
   state: string | null;
   priority: number;
   opStatus: string;
@@ -259,6 +290,7 @@ export interface MapHost {
   role: RoleKey;
   roleLabel: string;
   sector: SectorKey;
+  sectorOverride: string;
   icon: string;
   /** Operator icon override, if any (else role-derived icon is used). */
   iconOverride: string;
@@ -282,6 +314,8 @@ export interface BuildMapHostInput {
   notes: string;
   /** Operator icon override (emoji/char); empty = role default. */
   iconOverride?: string;
+  /** Manual sector override from drag-and-drop; empty = auto-derived. */
+  sectorOverride?: string;
   ports: MapPort[];
   /** Manual findings (from recon-deck `findings` table) already mapped to Sev. */
   manualFindings: TacticalFinding[];
@@ -296,6 +330,10 @@ export function buildMapHost(input: BuildMapHostInput): MapHost {
   const role = roleOf(portNums, input.osName);
   const def = ROLES[role];
   const iconOverride = (input.iconOverride ?? "").trim();
+  const sectorOverride = (input.sectorOverride ?? "").trim();
+  const effectiveSector = (sectorOverride && SECTORS.some(s => s.key === sectorOverride))
+    ? sectorOverride as SectorKey
+    : def.sector;
 
   // derived (port/OS) findings + operator-entered manual findings, deduped
   const derived = findingsFor(portNums, input.osName);
@@ -318,13 +356,16 @@ export function buildMapHost(input: BuildMapHostInput): MapHost {
     ip: input.ip,
     hostname: input.hostname,
     osName: input.osName,
+    osIconStr: osIcon(input.osName),
+    osShortStr: osShort(input.osName),
     state: input.state,
     priority: input.priority,
     opStatus: input.opStatus,
     notes: input.notes,
     role,
     roleLabel: def.label,
-    sector: def.sector,
+    sector: effectiveSector,
+    sectorOverride,
     icon: iconOverride || def.icon,
     iconOverride,
     ports: input.ports.sort((a, b) => a.port - b.port),

@@ -101,6 +101,7 @@ function buildEngagement(): FullEngagement {
         op_status: "recon",
         notes: "",
         icon: "",
+        sector: "",
       },
     ],
     // Ports inserted in descending order on purpose — view model must sort ASC.

@@ -359,6 +359,11 @@ export const hosts = sqliteTable(
      * Empty = fall back to the role-derived icon. Operator-owned (rescan-safe).
      */
     icon: text("icon").notNull().default(""),
+    /**
+     * Manual sector override for drag-and-drop on the tactical map, migration 0025.
+     * Empty = auto-derived from ports/OS via roleOf(). Operator-owned (rescan-safe).
+     */
+    sector: text("sector").notNull().default(""),
   },
   (t) => [index("hosts_engagement_id_idx").on(t.engagement_id)],
 );
@@ -799,12 +804,37 @@ export const command_log = sqliteTable(
     /** Short result/output paste or summary. */
     result: text("result").notNull().default(""),
     ts: text("ts").notNull(),
+    category: text("category").notNull().default(""),
+    status: text("status").notNull().default("INFO"),
+    summary: text("summary").notNull().default(""),
+    starred: integer("starred", { mode: "boolean" }).notNull().default(false),
+    link: text("link").notNull().default(""),
+    goal: text("goal").notNull().default(""),
   },
   (t) => [
     index("command_log_engagement_id_idx").on(t.engagement_id),
     index("command_log_host_id_idx").on(t.host_id),
   ],
 );
+
+// ---------------------------------------------------------------------------
+// timeline_notes (fork: engagement-level operator notes) — migration 0026
+// ---------------------------------------------------------------------------
+
+export const timeline_notes = sqliteTable(
+  "timeline_notes",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    engagement_id: integer("engagement_id")
+      .notNull()
+      .references(() => engagements.id, { onDelete: "cascade" }),
+    body: text("body").notNull().default(""),
+    ts: text("ts").notNull(),
+  },
+  (t) => [index("timeline_notes_engagement_id_idx").on(t.engagement_id)],
+);
+
+export type TimelineNote = typeof timeline_notes.$inferSelect;
 
 // ---------------------------------------------------------------------------
 // network_intel (fork: engagement-level operation brief) — migration 0024

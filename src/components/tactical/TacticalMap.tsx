@@ -22,6 +22,8 @@ import { IntelPanel } from "./IntelPanel";
 import { NetworkBrief } from "./NetworkBrief";
 import styles from "./TacticalMap.module.css";
 
+import { RoleIcon, ROLE_COLOR } from "./RoleIcon";
+
 export interface NetworkIntelView {
   organization: string;
   domain: string;
@@ -74,15 +76,18 @@ export function TacticalMap({
 
   // totals + threat
   const totals = useMemo(() => {
-    const t = { crit: 0, high: 0, med: 0, low: 0 };
+    const t = { crit: 0, high: 0, med: 0, low: 0, creds: 0, ports: 0 };
     for (const h of hosts) {
       t.crit += h.counts.crit;
       t.high += h.counts.high;
       t.med += h.counts.med;
       t.low += h.counts.low;
+      t.creds += h.creds.length;
+      t.ports += h.ports.length;
     }
     return t;
   }, [hosts]);
+  const highValue = hosts.filter(h => h.maxsev >= 3).length;
   const threat = totals.crit ? "CRITICAL" : totals.high ? "HIGH" : totals.med ? "ELEVATED" : "LOW";
 
   const onSelect = useCallback((h: MapHost, ev?: React.MouseEvent) => {
@@ -157,23 +162,42 @@ export function TacticalMap({
         <Link href={`/engagements/${engagementId}`} className={styles.back}>
           ◂ КАРТОЧКИ
         </Link>
-        <h1 className={styles.title}>
-          ◢ TACTICAL <span>MAP</span>
-        </h1>
+        <Link href={`/engagements/${engagementId}/timeline`} className={styles.back}>
+          ⏱ TIMELINE
+        </Link>
+        <div className={styles.opName}>
+          <span className={styles.opLabel}>OPERATION:</span> {engagementName}
+        </div>
         <div className={styles.stats}>
-          <div className={styles.stat}>
+          <div className={styles.statBox}>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="1" width="10" height="14" rx="1.5"/><line x1="5.5" y1="4" x2="10.5" y2="4"/><line x1="5.5" y1="7" x2="10.5" y2="7"/></svg>
             <b>{hosts.length}</b>
-            <span>ЦЕЛЕЙ</span>
+            <span>HOSTS</span>
           </div>
-          <div className={styles.stat} style={{ color: "var(--t-crit)" }}>
+          <div className={styles.statBox} style={{ color: "var(--t-high)" }}>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" stroke="none"><path d="M8 1l2 5h5l-4 3.5 1.5 5.5L8 11.5 3.5 15 5 9.5 1 6h5z"/></svg>
+            <b>{highValue}</b>
+            <span>HIGH VALUE</span>
+          </div>
+          <div className={styles.statBox} style={{ color: "#f4a261" }}>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="4" width="12" height="9" rx="1"/><circle cx="8" cy="8.5" r="2"/></svg>
+            <b>{totals.creds}</b>
+            <span>CREDS</span>
+          </div>
+          <div className={styles.statBox}>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="8" cy="8" r="6"/><line x1="8" y1="2" x2="8" y2="5"/><line x1="8" y1="11" x2="8" y2="14"/><line x1="2" y1="8" x2="5" y2="8"/><line x1="11" y1="8" x2="14" y2="8"/></svg>
+            <b>{totals.ports}</b>
+            <span>PORTS</span>
+          </div>
+          <div className={styles.statBox} style={{ color: "var(--t-crit)" }}>
             <b>{totals.crit}</b>
             <span>CRIT</span>
           </div>
-          <div className={styles.stat} style={{ color: "var(--t-high)" }}>
+          <div className={styles.statBox} style={{ color: "var(--t-high)" }}>
             <b>{totals.high}</b>
             <span>HIGH</span>
           </div>
-          <div className={styles.stat} style={{ color: "var(--t-med)" }}>
+          <div className={styles.statBox} style={{ color: "var(--t-med)" }}>
             <b>{totals.med}</b>
             <span>MED</span>
           </div>
@@ -185,7 +209,7 @@ export function TacticalMap({
                 : undefined
             }
           >
-            УГРОЗА: {threat}
+            {threat}
           </div>
         </div>
       </header>
@@ -245,6 +269,25 @@ export function TacticalMap({
             ))}
           </div>
 
+          {/* role legend */}
+          <div className={styles.roleLegend}>
+            {Object.entries(ROLE_COLOR).filter(([k]) => !["ipmi"].includes(k)).map(([role, color]) => (
+              <div key={role} className={styles.roleLegendItem}>
+                <span className={styles.roleLegendHex} style={{ background: color }}><RoleIcon role={role} size={11} /></span>
+                <span>{role === "dc" ? "DOMAIN CTRL" : role === "mssql" ? "DATABASE" : role === "ilo" ? "iLO / IPMI" : role === "backup" ? "BACKUP" : role === "printer" ? "PRINTER" : role === "camera" ? "CAMERA" : role === "windows" ? "WORKSTATION" : "SERVER"}</span>
+              </div>
+            ))}
+            <div className={styles.roleLegendSep} />
+            <div className={styles.roleLegendItem}>
+              <span className={styles.roleLegendLine} />
+              <span>NETWORK CONN</span>
+            </div>
+            <div className={styles.roleLegendItem}>
+              <span className={styles.roleLegendLineDash} />
+              <span>DOMAIN LINK</span>
+            </div>
+          </div>
+
           <div className={styles.legend}>
             <span><i style={{ background: "var(--t-crit)" }} />CRIT</span>
             <span><i style={{ background: "var(--t-high)" }} />HIGH</span>
@@ -252,7 +295,7 @@ export function TacticalMap({
             <span><i style={{ background: "var(--t-low)" }} />LOW</span>
             <span><i style={{ background: "var(--t-owned)" }} />OWNED</span>
             <span style={{ marginLeft: "auto" }}>
-              {engagementName} · клик по цели → разведданные · линии = домен ↔ DC
+              {engagementName} · клик по цели → разведданные
             </span>
           </div>
         </div>
@@ -271,6 +314,17 @@ export function TacticalMap({
   );
 }
 
+
+function riskScore(h: MapHost): number {
+  return h.counts.crit * 40 + h.counts.high * 20 + h.counts.med * 8 + h.counts.low * 2;
+}
+function riskColor(score: number): string {
+  if (score >= 80) return "var(--t-crit)";
+  if (score >= 40) return "var(--t-high)";
+  if (score >= 10) return "var(--t-med)";
+  return "var(--t-low)";
+}
+
 function Blip({
   host,
   selected,
@@ -283,14 +337,14 @@ function Blip({
   innerRef: (el: HTMLElement | null) => void;
 }) {
   const sev = topSev(host.counts);
-  const oct = host.ip.split(".").pop();
-  const badge = (n: number, cls: string) => (
-    <div className={`${styles.badge} ${n ? cls : styles.bZero}`}>{n || "·"}</div>
-  );
+  const score = riskScore(host);
+  const rc = riskColor(score);
+  const roleColor = ROLE_COLOR[host.role] || "#48bfe3";
   return (
-    <button
-      type="button"
-      ref={innerRef as (el: HTMLButtonElement | null) => void}
+    <div
+      role="button"
+      tabIndex={0}
+      ref={innerRef}
       className={[
         styles.blip,
         SEV_CLASS[sev],
@@ -303,21 +357,22 @@ function Blip({
       <span className={`${styles.statusChip} ${STATUS_CLASS[host.opStatus] ?? ""}`}>
         {host.opStatus}
       </span>
-      <div className={styles.ico}>{host.icon}</div>
-      <div className={styles.ip}>
-        .{oct} <span className={styles.ipFull}>{host.ip}</span>
+      <div className={styles.icoLarge} style={{ background: roleColor }}>
+        <RoleIcon role={host.role} size={26} />
       </div>
-      <div className={styles.hn}>{host.hostname || " "}</div>
-      <div className={styles.ro}>{host.roleLabel}</div>
-      <div className={styles.badges}>
-        {badge(host.counts.crit, styles.bCrit)}
-        {badge(host.counts.high, styles.bHigh)}
-        {badge(host.counts.med, styles.bMed)}
-        {badge(host.counts.low, styles.bLow)}
+      <div className={styles.blipName}>{host.hostname || host.roleLabel}</div>
+      <div className={styles.blipIp}>{host.ip}</div>
+      {host.osShortStr && (
+        <div className={styles.blipOs}>
+          <span>{host.osIconStr}</span> {host.osShortStr}
+        </div>
+      )}
+      <div className={styles.blipRisk} style={{ color: rc }}>
+        RISK: {score}
       </div>
       {host.priority > 0 && (
         <span className={styles.priStars}>{"★".repeat(host.priority)}</span>
       )}
-    </button>
+    </div>
   );
 }

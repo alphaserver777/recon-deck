@@ -93,6 +93,7 @@ export default async function MapPage({ params }: PageProps) {
       opStatus: h.op_status,
       notes: h.notes,
       iconOverride: h.icon,
+      sectorOverride: h.sector,
       ports: hostPorts,
       manualFindings: manual,
       defenses: allDefenses.filter((d) => d.host_id === h.id).map(mapDefense),

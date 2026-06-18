@@ -19,7 +19,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { importAutoRecon } from "@/lib/importer/autorecon";
-import { db, createFromScan } from "@/lib/db";
+import { db, createFromScan, findEngagementBySubnet, rescanEngagement } from "@/lib/db";
+import { parseNmapXml } from "@/lib/parser";
 
 // D-11: 50 MB max upload size (typical AutoRecon zips are 2-25 MB)
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
@@ -91,17 +92,32 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Persist engagement using createFromScan with arData.
-  // Note: rawInput is file.name (the zip filename) per D-14 — not the zip binary.
-  let result;
+  // Upsert: if ?subnet= is provided, find existing engagement and rescan it
+  // instead of creating a new one. Operator data (creds/notes/defenses/sector)
+  // is preserved — only host/port scan data is refreshed.
+  const subnet = request.nextUrl.searchParams.get("subnet");
+  const existingId = subnet ? findEngagementBySubnet(db, subnet) : null;
+
+  let resultId: number;
   try {
-    result = createFromScan(db, importResult.scan, file.name, {
-      arFiles: importResult.arFiles,
-      arCommands: importResult.arCommands,
-      arArtifacts: importResult.arArtifacts,
-    });
+    if (existingId) {
+      rescanEngagement(db, existingId, importResult.scan, file.name);
+      resultId = existingId;
+    } else {
+      const created = createFromScan(db, importResult.scan, file.name, {
+        arFiles: importResult.arFiles,
+        arCommands: importResult.arCommands,
+        arArtifacts: importResult.arArtifacts,
+      });
+      resultId = created.id;
+      // If subnet tag provided but no existing engagement found, rename to subnet
+      if (subnet) {
+        const { renameEngagement } = await import("@/lib/db");
+        renameEngagement(db, resultId, subnet);
+      }
+    }
   } catch (err) {
-    console.error("createFromScan (autorecon) failed:", err);
+    console.error("import/autorecon failed:", err);
     return NextResponse.json(
       { error: "Failed to save engagement. Please try again." },
       { status: 500 },
@@ -109,5 +125,6 @@ export async function POST(request: NextRequest) {
   }
 
   revalidatePath("/", "layout");
-  return NextResponse.json({ id: result.id });
+  if (existingId) revalidatePath(`/engagements/${existingId}`);
+  return NextResponse.json({ id: resultId, upserted: !!existingId });
 }
