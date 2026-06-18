@@ -2,6 +2,53 @@
 
 All notable changes to recon-deck. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Beta release channel.** New features now ship to a pre-release channel
+  before promotion to stable, so `main`/stable stays clean:
+  - The release workflow publishes pre-release tags (`vX.Y.Z-beta.N`) to a
+    moving `:beta` Docker tag plus the pinned `:X.Y.Z-beta.N`, and marks the
+    GitHub release as a pre-release. Stable's `:latest` / `:X.Y` / `:X` tags
+    are never moved by a beta build.
+  - `install.sh --beta` (and `--stable`) selects the channel; default stays
+    stable.
+  - The in-app update check honors `RECON_UPDATE_CHANNEL=beta` to track the
+    newest pre-release. The default stable check uses GitHub's
+    `/releases/latest`, which excludes pre-releases, so stable installs are
+    never nudged toward a beta. Version comparison is now pre-release aware.
+
+## [2.4.1] — 2026-06-16
+
+Patch. **Security hardening** of the operator-configurable KB directory and
+the port-detail external links. No schema change, no feature change — drop-in
+upgrade. Found via a SAST sweep and confirmed on a live deployment.
+
+### Security
+
+- **KB user directory: symlink escape + missing server-side validation.**
+  The `kb_user_dir` setting was persisted (via the onboarding server actions)
+  with no server-side path validation — the `isAbsolute` check existed only as
+  a client-side UX chip. The KB loader then enumerated that directory and read
+  every `*.yaml` entry. A `*.yaml` **symlink** pointing at an arbitrary file
+  (e.g. `/etc/passwd`) was followed and the target opened/read into memory
+  before schema validation rejected it. Confidentiality impact was bounded
+  (flat `*.yaml`-only, strict `KbEntrySchema`, parse failures never returned
+  over HTTP), but the file was still read. Fixes:
+  - `app/welcome/_actions.ts` now enforces `path.isAbsolute` server-side for
+    all operator path fields (`kb_user_dir`, `local_export_dir`,
+    `wordlist_base`) — never trust the client to have run the check.
+  - `src/lib/kb/loader.ts` skips symlinked entries (`lstat`) and verifies each
+    resolved file path stays within the KB dir before reading — a symlinked
+    `*.yaml` is now never opened.
+- **Port-detail external links: render-time scheme guard (defense in depth).**
+  `PortDetailPane` rendered KB `known_vulns[].link` / `resources[].url` and
+  exploit-db URLs into `<a href>` trusting only ingest-time Zod `httpUrl`
+  validation. Render now passes every dynamic href through `isAllowedUrl`
+  (mirroring `ResourceLink`), so a `javascript:`/`data:` URL can never reach an
+  anchor even if a future ingest path skips the schema check.
+
 ## [2.4.0] — 2026-05-07
 
 Minor. **Context-aware checklists** ship — the headline feature of #14.
