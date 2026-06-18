@@ -21,6 +21,22 @@ export interface CommandLogInput {
   portId?: number | null;
   command: string;
   result?: string;
+  category?: string;
+  status?: string;
+  summary?: string;
+  link?: string;
+  goal?: string;
+}
+
+export interface CommandLogPatch {
+  command?: string;
+  result?: string;
+  category?: string;
+  status?: string;
+  summary?: string;
+  starred?: boolean;
+  link?: string;
+  goal?: string;
 }
 
 export function listCommandLog(
@@ -48,9 +64,43 @@ export function createCommandLogEntry(
       command: input.command.trim(),
       result: input.result ?? "",
       ts: new Date().toISOString(),
+      category: input.category ?? "",
+      status: input.status ?? "INFO",
+      summary: input.summary ?? "",
+      link: input.link ?? "",
+      goal: input.goal ?? "",
     })
     .returning()
     .get();
+}
+
+export function updateCommandLogEntry(
+  db: Db,
+  engagementId: number,
+  id: number,
+  patch: CommandLogPatch,
+): boolean {
+  const sets: Record<string, unknown> = {};
+  if (patch.command !== undefined) sets.command = patch.command.trim();
+  if (patch.result !== undefined) sets.result = patch.result;
+  if (patch.category !== undefined) sets.category = patch.category;
+  if (patch.status !== undefined) sets.status = patch.status;
+  if (patch.summary !== undefined) sets.summary = patch.summary;
+  if (patch.starred !== undefined) sets.starred = patch.starred;
+  if (patch.link !== undefined) sets.link = patch.link;
+  if (patch.goal !== undefined) sets.goal = patch.goal;
+  if (Object.keys(sets).length === 0) return false;
+  const result = db
+    .update(command_log)
+    .set(sets)
+    .where(
+      and(
+        eq(command_log.id, id),
+        eq(command_log.engagement_id, engagementId),
+      ),
+    )
+    .run();
+  return result.changes > 0;
 }
 
 export function deleteCommandLogEntry(

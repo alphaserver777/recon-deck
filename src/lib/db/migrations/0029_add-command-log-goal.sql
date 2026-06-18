@@ -1,0 +1,1 @@
+ALTER TABLE command_log ADD COLUMN goal TEXT NOT NULL DEFAULT '';

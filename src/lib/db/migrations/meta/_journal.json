@@ -176,6 +176,41 @@
       "when": 1779400000000,
       "tag": "0024_add-network-intel-defenses-icon",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1779500000000,
+      "tag": "0025_add-host-sector-override",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1779600000000,
+      "tag": "0026_add-timeline-columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "6",
+      "when": 1779700000000,
+      "tag": "0027_add-command-log-starred",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "6",
+      "when": 1779800000000,
+      "tag": "0028_add-command-log-link",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1779900000000,
+      "tag": "0029_add-command-log-goal",
+      "breakpoints": true
     }
   ]
 }
