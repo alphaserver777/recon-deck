@@ -697,6 +697,20 @@
   background: #112230;
   box-shadow: 0 0 8px #39d0ff22;
 }
+.tagStar {
+  color: var(--t-high);
+  border-color: #ff7a1844;
+}
+.tagStar:hover {
+  border-color: var(--t-high);
+  color: var(--t-high);
+}
+.tagStar.tagChipOn {
+  border-color: var(--t-high);
+  color: var(--t-high);
+  background: #2a1a0e;
+  box-shadow: 0 0 8px #ff7a1833;
+}
 
 /* notes in sidebar */
 .noteItem {

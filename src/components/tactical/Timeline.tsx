@@ -79,13 +79,13 @@ export function Timeline({
 
   const [filterHost, setFilterHost] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
+  const [filterStarred, setFilterStarred] = useState(false);
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [phase, setPhase] = useState("recon");
 
-  const hasFilters = filterHost || filterStatus || filterCategory || activeTags.size > 0 || dateFrom || dateTo;
+  const hasFilters = filterHost || filterStatus || filterStarred || activeTags.size > 0 || dateFrom || dateTo;
 
   const hostMap = useMemo(() => {
     const m = new Map<number, HostLookup>();
@@ -97,7 +97,7 @@ export function Timeline({
     let list = entries;
     if (filterHost) list = list.filter((e) => e.host_id === Number(filterHost));
     if (filterStatus) list = list.filter((e) => e.status === filterStatus);
-    if (filterCategory) list = list.filter((e) => e.category === filterCategory);
+    if (filterStarred) list = list.filter((e) => e.starred);
     if (activeTags.size > 0) list = list.filter((e) => activeTags.has(e.category));
     if (dateFrom) {
       const from = new Date(dateFrom).getTime();
@@ -108,7 +108,7 @@ export function Timeline({
       list = list.filter((e) => new Date(e.ts).getTime() <= to);
     }
     return list;
-  }, [entries, filterHost, filterStatus, filterCategory, activeTags, dateFrom, dateTo]);
+  }, [entries, filterHost, filterStatus, filterStarred, activeTags, dateFrom, dateTo]);
 
   const stats = useMemo(() => {
     const s = { total: entries.length, success: 0, creds: 0, errors: 0, info: 0 };
@@ -135,7 +135,7 @@ export function Timeline({
   const clearAllFilters = useCallback(() => {
     setFilterHost("");
     setFilterStatus("");
-    setFilterCategory("");
+    setFilterStarred(false);
     setActiveTags(new Set());
     setDateFrom("");
     setDateTo("");
@@ -366,12 +366,6 @@ export function Timeline({
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-            <select className={styles.filterSelect} value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
-              <option value="">All Categories</option>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
           </div>
 
           <div className={styles.secTitle}>DATE RANGE</div>
@@ -388,6 +382,13 @@ export function Timeline({
 
           <div className={styles.secTitle}>TAGS</div>
           <div className={styles.tags}>
+            <button
+              type="button"
+              className={`${styles.tagChip} ${styles.tagStar} ${filterStarred ? styles.tagChipOn : ""}`}
+              onClick={() => setFilterStarred((v) => !v)}
+            >
+              ★ starred
+            </button>
             {CATEGORIES.map((c) => (
               <button
                 key={c}
