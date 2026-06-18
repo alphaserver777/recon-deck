@@ -376,13 +376,37 @@
   word-break: break-word;
 }
 
-/* IN column — command */
+/* IN column — command + copy */
+.cmdCell {
+  position: relative;
+}
 .cmdIn {
   font-family: var(--font-geist-mono, monospace);
   font-size: 12px;
   color: var(--t-success);
   word-break: break-all;
   line-height: 1.4;
+}
+.copyBtn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #13212e;
+  border: 1px solid var(--t-line);
+  border-radius: 3px;
+  color: var(--t-dim);
+  font-size: 13px;
+  padding: 2px 5px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s;
+  line-height: 1;
+}
+.cmdCell:hover .copyBtn { opacity: 0.7; }
+.copyBtn:hover {
+  opacity: 1 !important;
+  color: var(--t-accent);
+  border-color: var(--t-accent);
 }
 
 /* OUT column — raw output */

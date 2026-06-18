@@ -295,7 +295,7 @@ export function Timeline({
             <div className={styles.th}>OUT</div>
             <div className={styles.th}>RESULT</div>
             <div className={styles.th}>HOST</div>
-            <div className={styles.th}>CATEGORY</div>
+            <div className={styles.th}>TAGS</div>
             <div className={styles.th}>STATUS</div>
           </div>
 
@@ -601,8 +601,16 @@ function EntryRow({
       <div className={styles.cell}>
         <div className={styles.goalText}>{entry.goal || "—"}</div>
       </div>
-      <div className={styles.cell}>
+      <div className={`${styles.cell} ${styles.cmdCell}`}>
         <div className={styles.cmdIn}>{entry.command}</div>
+        <button
+          type="button"
+          className={styles.copyBtn}
+          title="Копировать команду"
+          onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(entry.command); }}
+        >
+          {"⧉"}
+        </button>
       </div>
       <div className={styles.cell}>
         <div className={styles.cmdOut}>{entry.result || "—"}</div>
@@ -625,11 +633,7 @@ function EntryRow({
         </div>
       </div>
       <div className={styles.cell}>
-        {entry.category ? (
-          <span className={styles.categoryChip}>{entry.category}</span>
-        ) : (
-          <span style={{ color: "var(--t-dim)" }}>—</span>
-        )}
+        {entry.category && <span className={styles.categoryChip}>{entry.category}</span>}
       </div>
       <div className={styles.cell} style={{ alignItems: "center" }}>
         <span className={`${styles.statusBadge} ${STATUS_BADGE[st] ?? styles.badgeInfo}`}>
