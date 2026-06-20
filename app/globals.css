@@ -32,7 +32,7 @@
   --color-popover: var(--bg-2);
   --color-popover-foreground: var(--fg);
   --color-primary: var(--accent);
-  --color-primary-foreground: #05170d;
+  --color-primary-foreground: #041520;
   --color-secondary: var(--bg-3);
   --color-secondary-foreground: var(--fg);
   --color-muted: var(--bg-3);
@@ -53,36 +53,39 @@
 }
 
 :root {
-  /* Surfaces — cool neutral, subtly blueish black */
-  --bg-0: #0a0a0c;
-  --bg-1: #111114;
-  --bg-2: #17181c;
-  --bg-3: #1d1e22;
-  --code-surface: #0e0f12;
+  /* Surfaces — deep blue-black tactical chrome (ops-panel palette) */
+  --bg-0: #0a0e14;
+  --bg-1: #0e131c;
+  --bg-2: #121a24;
+  --bg-3: #18222e;
+  --code-surface: #0c1018;
 
   /* Borders */
-  --border: #232428;
-  --border-strong: #2e3036;
-  --border-subtle: #1b1c20;
+  --border: #1b2735;
+  --border-strong: #243444;
+  --border-subtle: #151e2a;
+  --border-cyan: #1f3a45;
 
   /* Text */
-  --fg: #fafafa;
-  --fg-muted: #a4a8b0;
-  --fg-subtle: #6a6e78;
-  --fg-faint: #44474f;
+  --fg: #d7e6f0;
+  --fg-muted: #7f97aa;
+  --fg-subtle: #56697a;
+  --fg-faint: #3a4d5e;
 
-  /* Accent — terminal green (used sparingly) */
-  --accent: #4ade80;
-  --accent-dim: #22c55e;
-  --accent-bg: rgba(74, 222, 128, 0.08);
-  --accent-border: rgba(74, 222, 128, 0.22);
+  /* Accent — cyan/teal (ops-panel brand) */
+  --accent: #22d3ee;
+  --accent-dim: #0e7490;
+  --accent-soft: rgba(34, 211, 238, 0.12);
+  --accent-bg: rgba(34, 211, 238, 0.08);
+  --accent-border: rgba(34, 211, 238, 0.22);
+  --accent-green: #4ade80;
 
   /* Risk palette */
-  --risk-crit: #f87171;
-  --risk-high: #fb923c;
-  --risk-med:  #fbbf24;
-  --risk-low:  #60a5fa;
-  --risk-info: #8b8f98;
+  --risk-crit: #f2484f;
+  --risk-high: #ff7a18;
+  --risk-med:  #ffd400;
+  --risk-low:  #3b82f6;
+  --risk-info: #5a7d9a;
 
   /* Typography — next/font/google wires real values in layout.tsx (Step 2) */
   --font-ui: "Inter", ui-sans-serif, system-ui, sans-serif;

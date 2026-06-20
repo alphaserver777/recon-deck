@@ -20,6 +20,13 @@ export interface NetworkIntelPatch {
   scope?: string;
   budget?: string;
   notes?: string;
+  vpn_login?: string;
+  vpn_password?: string;
+  industry?: string;
+  employee_count?: number;
+  progress?: number;
+  risk_level?: string;
+  op_status?: string;
 }
 
 const EMPTY = (engagementId: number): NetworkIntel => ({
@@ -30,6 +37,13 @@ const EMPTY = (engagementId: number): NetworkIntel => ({
   budget: "",
   notes: "",
   updated_at: "",
+  vpn_login: "",
+  vpn_password: "",
+  industry: "",
+  employee_count: 0,
+  progress: 0,
+  risk_level: "medium",
+  op_status: "recon",
 });
 
 export function getNetworkIntel(db: Db, engagementId: number): NetworkIntel {
@@ -59,6 +73,13 @@ export function upsertNetworkIntel(
     scope: patch.scope ?? existing?.scope ?? "",
     budget: patch.budget ?? existing?.budget ?? "",
     notes: patch.notes ?? existing?.notes ?? "",
+    vpn_login: patch.vpn_login ?? existing?.vpn_login ?? "",
+    vpn_password: patch.vpn_password ?? existing?.vpn_password ?? "",
+    industry: patch.industry ?? existing?.industry ?? "",
+    employee_count: patch.employee_count ?? existing?.employee_count ?? 0,
+    progress: patch.progress ?? existing?.progress ?? 0,
+    risk_level: patch.risk_level ?? existing?.risk_level ?? "medium",
+    op_status: patch.op_status ?? existing?.op_status ?? "recon",
   };
 
   return db

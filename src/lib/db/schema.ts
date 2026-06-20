@@ -139,6 +139,13 @@ export const engagements = sqliteTable(
      * UI surfaces a `sample` chip on the engagement header and a
      * one-click "Discard sample" affordance for fast cleanup.
      */
+    /**
+     * Migration 0030: white IP of the FortiVPN target that discovered
+     * this engagement's subnet. Groups engagements by entry-point in
+     * the sidebar and prevents cross-target upsert collisions.
+     */
+    vpn_ip: text("vpn_ip"),
+
     is_sample: integer("is_sample", { mode: "boolean" })
       .notNull()
       .default(false),
@@ -859,6 +866,13 @@ export const network_intel = sqliteTable("network_intel", {
   /** Free markdown for everything else. */
   notes: text("notes").notNull().default(""),
   updated_at: text("updated_at").notNull(),
+  vpn_login: text("vpn_login").notNull().default(""),
+  vpn_password: text("vpn_password").notNull().default(""),
+  industry: text("industry").notNull().default(""),
+  employee_count: integer("employee_count").notNull().default(0),
+  progress: integer("progress").notNull().default(0),
+  risk_level: text("risk_level").notNull().default("medium"),
+  op_status: text("op_status").notNull().default("recon"),
 });
 
 // ---------------------------------------------------------------------------
