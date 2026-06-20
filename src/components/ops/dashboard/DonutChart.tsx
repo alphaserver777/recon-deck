@@ -1,4 +1,4 @@
-import type { ChartSegment } from "@/lib/mock-data";
+import type { ChartSegment } from "@/lib/ops-views/types";
 
 const R = 40;
 const STROKE = 12;
