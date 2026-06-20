@@ -2,27 +2,73 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bug } from "lucide-react";
-import { NAV_ITEMS } from "@/lib/nav";
-import { useNavFilter } from "@/lib/nav-filter-context";
-import { useCompany } from "@/lib/company-context";
-import { COMPANY_STATUS_COLORS, COMPANY_STATUS_LABELS } from "@/lib/company-data";
+import {
+  Bug,
+  LayoutDashboard,
+  Network,
+  Server,
+  KeyRound,
+  ShieldAlert,
+  Route,
+  Crosshair,
+  Clock,
+  StickyNote,
+  FileText,
+  FolderOpen,
+  Building2,
+  type LucideIcon,
+} from "lucide-react";
+import { useEngagement } from "@/lib/engagement-context";
 
 const NAV_WIDTH = 230;
 
+const STATUS_COLORS: Record<string, string> = {
+  recon: "var(--risk-low)",
+  active: "var(--accent)",
+  compromised: "var(--risk-high)",
+  completed: "#22c55e",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  recon: "РАЗВЕДКА",
+  active: "АКТИВНА",
+  compromised: "КОМПРОМЕТАЦИЯ",
+  completed: "ЗАВЕРШЕНА",
+};
+
+interface NavItem {
+  label: string;
+  segment: string;
+  icon: LucideIcon;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { label: "КОМПАНИЯ", segment: "company", icon: Building2 },
+  { label: "ОБЗОР", segment: "dashboard", icon: LayoutDashboard },
+  { label: "КАРТА СЕТИ", segment: "map", icon: Network },
+  { label: "ХОСТЫ", segment: "hosts", icon: Server },
+  { label: "УЧЕТНЫЕ ДАННЫЕ", segment: "credentials", icon: KeyRound },
+  { label: "УЯЗВИМОСТИ", segment: "vulnerabilities", icon: ShieldAlert },
+  { label: "ПУТИ АТАКИ", segment: "attack-paths", icon: Route },
+  { label: "MITRE ATT&CK", segment: "mitre", icon: Crosshair },
+  { label: "ХРОНОЛОГИЯ", segment: "timeline", icon: Clock },
+  { label: "ФАЙЛЫ", segment: "files", icon: FolderOpen },
+  { label: "ОТЧЕТЫ", segment: "reports", icon: FileText },
+  { label: "ЗАМЕТКИ", segment: "notes", icon: StickyNote },
+];
+
 export function OpsNav() {
   const pathname = usePathname();
-  const { content: filterContent } = useNavFilter();
-  const { selected } = useCompany();
+  const eng = useEngagement();
+  const base = `/engagements/${eng.id}`;
 
-  const statusColor = selected ? COMPANY_STATUS_COLORS[selected.status] : "var(--fg-subtle)";
-  const statusLabel = selected ? COMPANY_STATUS_LABELS[selected.status] : "—";
-  const objective = selected
-    ? selected.status === "active" ? "DOMAIN DOMINANCE"
-      : selected.status === "recon" ? "RECONNAISSANCE"
-      : selected.status === "completed" ? "COMPLETED"
-      : "IN PROGRESS"
-    : "—";
+  const statusColor = STATUS_COLORS[eng.status] || "var(--fg-subtle)";
+  const statusLabel = STATUS_LABELS[eng.status] || "—";
+  const objective =
+    eng.status === "active" ? "DOMAIN DOMINANCE"
+    : eng.status === "recon" ? "RECONNAISSANCE"
+    : eng.status === "completed" ? "COMPLETED"
+    : "IN PROGRESS";
 
   return (
     <aside
@@ -33,7 +79,6 @@ export function OpsNav() {
         borderRight: "1px solid var(--border)",
       }}
     >
-      {/* Brand */}
       <div
         className="flex items-center gap-2.5 px-4"
         style={{ height: 64, borderBottom: "1px solid var(--border)" }}
@@ -67,17 +112,16 @@ export function OpsNav() {
         </div>
       </div>
 
-      {/* Nav list */}
-      <nav className={filterContent ? "shrink-0 px-2.5 py-3" : "flex-1 overflow-y-auto px-2.5 py-3"}>
+      <nav className="flex-1 overflow-y-auto px-2.5 py-3">
         <ul className="flex flex-col gap-0.5">
           {NAV_ITEMS.map((item) => {
-            const active =
-              pathname === item.href || pathname.startsWith(item.href + "/");
+            const href = `${base}/${item.segment}`;
+            const active = pathname === href || pathname.startsWith(href + "/");
             const Icon = item.icon;
             return (
-              <li key={item.href}>
+              <li key={item.segment}>
                 <Link
-                  href={item.href}
+                  href={href}
                   className="flex items-center gap-3"
                   style={{
                     padding: "8px 10px",
@@ -99,14 +143,6 @@ export function OpsNav() {
         </ul>
       </nav>
 
-      {/* Page-specific filter slot */}
-      {filterContent && (
-        <div className="flex-1 overflow-y-auto px-2.5" style={{ borderTop: "1px solid var(--border)" }}>
-          {filterContent}
-        </div>
-      )}
-
-      {/* Operation status card */}
       <div className="px-2.5 pb-3 shrink-0">
         <div
           style={{
@@ -151,11 +187,8 @@ export function OpsNav() {
               >
                 PROGRESS
               </span>
-              <span
-                className="mono"
-                style={{ fontSize: 10.5, color: "var(--fg-muted)" }}
-              >
-                {selected?.progress ?? 0}%
+              <span className="mono" style={{ fontSize: 10.5, color: "var(--fg-muted)" }}>
+                {eng.progress}%
               </span>
             </div>
             <div
@@ -172,7 +205,7 @@ export function OpsNav() {
                 style={{
                   position: "absolute",
                   inset: 0,
-                  width: `${selected?.progress ?? 0}%`,
+                  width: `${eng.progress}%`,
                   background: statusColor,
                   borderRadius: 99,
                 }}
