@@ -5,7 +5,8 @@ import {
   listCommandLog,
   listTimelineNotes,
 } from "@/lib/db";
-import { Timeline } from "@/components/tactical/Timeline";
+import { toTimelineLogEntry, toTimelineNoteEntry } from "@/lib/ops-views/timeline-vm";
+import { TimelineClient } from "./client";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -19,23 +20,21 @@ export default async function TimelinePage({ params }: PageProps) {
   const eng = getById(db, engagementId);
   if (!eng) notFound();
 
-  const entries = listCommandLog(db, engagementId);
-  const notes = listTimelineNotes(db, engagementId);
+  const rawEntries = listCommandLog(db, engagementId);
+  const rawNotes = listTimelineNotes(db, engagementId);
 
-  const hostsLookup = eng.hosts.map((h) => ({
-    id: h.id,
+  const hostMap = new Map(eng.hosts.map((h) => [h.id, h]));
+  const entries = rawEntries.map((cmd) => {
+    const host = hostMap.get(cmd.host_id);
+    return toTimelineLogEntry(cmd, host?.hostname || host?.ip || "?");
+  });
+  const notes = rawNotes.map(toTimelineNoteEntry);
+
+  const hosts = eng.hosts.map((h) => ({
+    id: String(h.id),
+    hostname: h.hostname ?? h.ip,
     ip: h.ip,
-    hostname: h.hostname,
-    role: "",
   }));
 
-  return (
-    <Timeline
-      engagementId={engagementId}
-      engagementName={eng.name}
-      entries={entries}
-      notes={notes}
-      hosts={hostsLookup}
-    />
-  );
+  return <TimelineClient entries={entries} notes={notes} hosts={hosts} />;
 }

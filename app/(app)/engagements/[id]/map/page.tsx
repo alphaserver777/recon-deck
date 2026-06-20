@@ -25,7 +25,8 @@ import {
   type MapDefense,
   type TacticalFinding,
 } from "@/lib/tactical";
-import { TacticalMap } from "@/components/tactical/TacticalMap";
+import { toMapHostFull } from "@/lib/ops-views/map-vm";
+import { MapClient } from "./client";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -121,20 +122,7 @@ export default async function MapPage({ params }: PageProps) {
   });
 
   const sorted = sortMapHosts(hosts);
+  const mapHosts = sorted.map(toMapHostFull);
 
-  return (
-    <TacticalMap
-      engagementId={engagementId}
-      engagementName={eng.name}
-      hosts={sorted}
-      networkIntel={{
-        organization: networkIntel.organization,
-        domain: networkIntel.domain,
-        scope: networkIntel.scope,
-        budget: networkIntel.budget,
-        notes: networkIntel.notes,
-      }}
-      networkDefenses={networkDefenses}
-    />
-  );
+  return <MapClient hosts={mapHosts} engagementName={eng.name} />;
 }

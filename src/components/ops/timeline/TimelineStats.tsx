@@ -1,4 +1,4 @@
-import { TIMELINE_STATUS_COLORS } from "@/lib/mock-data";
+import { TIMELINE_STATUS_COLORS } from "@/lib/ops-views/types";
 import { CircleCheck, KeyRound, XCircle, Info } from "lucide-react";
 
 type Stats = {

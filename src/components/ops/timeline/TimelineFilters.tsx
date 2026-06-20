@@ -1,4 +1,4 @@
-import type { MockHost, TimelineStatus, TimelineCategory } from "@/lib/mock-data";
+import type { MockHost, TimelineStatus, TimelineCategory } from "@/lib/ops-views/types";
 
 type Props = {
   hosts: MockHost[];

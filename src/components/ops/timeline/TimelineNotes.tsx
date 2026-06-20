@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import type { TimelineNoteEntry } from "@/lib/mock-data";
+import type { TimelineNoteEntry } from "@/lib/ops-views/types";
 
 export function TimelineNotes({ notes }: { notes: TimelineNoteEntry[] }) {
   return (

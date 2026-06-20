@@ -1,4 +1,4 @@
-import type { TimelineCategory } from "@/lib/mock-data";
+import type { TimelineCategory } from "@/lib/ops-views/types";
 
 type Props = {
   categories: TimelineCategory[];

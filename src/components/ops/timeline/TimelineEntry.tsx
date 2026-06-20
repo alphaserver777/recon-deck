@@ -1,10 +1,13 @@
 import { Star, Server, Shield, Monitor, Globe, Cpu } from "lucide-react";
-import type { TimelineLogEntry, MockHost, HostRole } from "@/lib/mock-data";
-import { TIMELINE_STATUS_COLORS } from "@/lib/mock-data";
+import type { TimelineLogEntry } from "@/lib/ops-views/types";
+import { TIMELINE_STATUS_COLORS } from "@/lib/ops-views/types";
+
+type HostRole = "domain-controller" | "server" | "workstation" | "iot" | "entry-point";
+type HostInfo = { id: string; hostname: string; ip: string; role?: HostRole };
 
 type Props = {
   entry: TimelineLogEntry;
-  host: MockHost | undefined;
+  host: HostInfo | undefined;
   onToggleStar: (id: number) => void;
 };
 
@@ -197,7 +200,7 @@ export function TimelineEntry({ entry, host, onToggleStar }: Props) {
           }}
         >
           <span style={{ color: "var(--fg-subtle)", flexShrink: 0 }}>
-            {host ? ROLE_ICONS[host.role] : <Server size={16} />}
+            {host?.role ? ROLE_ICONS[host.role] : <Server size={16} />}
           </span>
           <div className="mono" style={{ minWidth: 0 }}>
             <div style={{ fontSize: 11, color: "var(--fg)", fontWeight: 600 }}>

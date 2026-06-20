@@ -99,12 +99,54 @@ export type MapRoleKey =
   | "dc"
   | "mssql"
   | "ilo"
+  | "ipmi"
   | "backup"
   | "printer"
   | "camera"
   | "windows"
   | "host"
   | "exchange";
+
+export const MAP_ROLE_COLORS: Record<string, string> = {
+  dc: "#e74c3c",
+  mssql: "#ff7a18",
+  ilo: "#9b59b6",
+  ipmi: "#9b59b6",
+  backup: "#3498db",
+  printer: "#95a5a6",
+  camera: "#95a5a6",
+  windows: "#48bfe3",
+  host: "#48bfe3",
+  exchange: "#f39c12",
+};
+
+export const MAP_ROLE_LABELS: Record<string, string> = {
+  dc: "Domain Controller",
+  mssql: "Database Server",
+  ilo: "iLO / BMC",
+  ipmi: "IPMI / BMC",
+  backup: "Backup Server",
+  printer: "Printer",
+  camera: "Camera / NVR",
+  windows: "Workstation",
+  host: "Server",
+  exchange: "Exchange Server",
+};
+
+export function mapRiskColor(score: number): string {
+  if (score >= 80) return "var(--risk-crit)";
+  if (score >= 40) return "var(--risk-high)";
+  if (score >= 10) return "var(--risk-med)";
+  return "var(--risk-low)";
+}
+
+export function topSev(counts: SevCounts): string {
+  if (counts.crit > 0) return "crit";
+  if (counts.high > 0) return "high";
+  if (counts.med > 0) return "med";
+  if (counts.low > 0) return "low";
+  return "info";
+}
 
 export type OpStatus = "recon" | "active" | "owned" | "dismissed";
 
@@ -176,6 +218,13 @@ export type TimelineCategory =
   | "persistence"
   | "exfil"
   | "c2";
+
+export const TIMELINE_STATUS_COLORS: Record<string, string> = {
+  SUCCESS: "#22c55e",
+  CREDENTIALS: "var(--risk-high)",
+  INFO: "var(--accent)",
+  ERROR: "var(--risk-crit)",
+};
 
 export type TimelineLogEntry = {
   id: number;

@@ -1,4 +1,4 @@
-import type { MapRoleKey } from "@/lib/mock-data";
+import type { MapRoleKey } from "@/lib/ops-views/types";
 
 export function MapRoleIcon({ role, size = 20 }: { role: MapRoleKey; size?: number }) {
   const common = {

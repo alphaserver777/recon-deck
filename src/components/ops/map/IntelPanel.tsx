@@ -1,6 +1,6 @@
 import { MapRoleIcon } from "./MapRoleIcon";
-import type { MapHostFull } from "@/lib/mock-data";
-import { MAP_ROLE_COLORS, MAP_ROLE_LABELS, mapRiskColor } from "@/lib/mock-data";
+import type { MapHostFull } from "@/lib/ops-views/types";
+import { MAP_ROLE_COLORS, MAP_ROLE_LABELS, mapRiskColor } from "@/lib/ops-views/types";
 
 const SEV_COLORS: Record<string, string> = {
   crit: "var(--risk-crit)",
