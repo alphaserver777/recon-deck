@@ -113,4 +113,5 @@ export type EngagementSummary = Pick<
    * the sidebar "Risk ≥ high" chip. Same rationale as `findings_count`.
    */
   high_findings_count: number;
+  vpn_ip: string | null;
 };

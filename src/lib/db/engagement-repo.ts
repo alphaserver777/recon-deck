@@ -541,18 +541,21 @@ export function listSummaries(db: Db): EngagementSummary[] {
 export function findEngagementBySubnet(
   db: Db,
   subnet: string,
+  vpnIp?: string | null,
 ): number | null {
   const tag = subnet.trim();
   if (!tag) return null;
+  const conditions = [
+    eq(engagements.name, tag),
+    isNull(engagements.deleted_at),
+  ];
+  if (vpnIp) {
+    conditions.push(eq(engagements.vpn_ip, vpnIp));
+  }
   const row = db
     .select({ id: engagements.id })
     .from(engagements)
-    .where(
-      and(
-        eq(engagements.name, tag),
-        isNull(engagements.deleted_at),
-      ),
-    )
+    .where(and(...conditions))
     .orderBy(desc(engagements.id))
     .get();
   return row?.id ?? null;
@@ -572,6 +575,7 @@ interface SummaryRow {
   done_check_count: number;
   findings_count: number;
   high_findings_count: number;
+  vpn_ip: string | null;
 }
 
 /**
@@ -598,6 +602,7 @@ function querySummaries(db: Db, deletedOnly: boolean): EngagementSummary[] {
       e.created_at      AS created_at,
       e.tags            AS tags_raw,
       e.is_archived     AS is_archived,
+      e.vpn_ip          AS vpn_ip,
       COALESCE(pc.cnt, 0)    AS port_count,
       COALESCE(hc.cnt, 0)    AS host_count,
       ph.ip                  AS primary_ip,
@@ -657,6 +662,7 @@ function querySummaries(db: Db, deletedOnly: boolean): EngagementSummary[] {
       high_findings_count: Number(r.high_findings_count),
       tags,
       is_archived: Boolean(r.is_archived),
+      vpn_ip: r.vpn_ip ?? null,
     };
   });
 }

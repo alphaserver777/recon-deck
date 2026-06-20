@@ -321,6 +321,7 @@ const engagement: Engagement = {
   last_visited_at: null,
   last_visited_port_id: null,
   is_sample: false,
+  vpn_ip: null,
 };
 
 // P1-F PR 1: primary host row mirroring the legacy target columns. Once the

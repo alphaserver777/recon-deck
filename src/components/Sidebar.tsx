@@ -98,6 +98,7 @@ export function Sidebar({
   const [bulkFilters, setBulkFilters] = useState<
     Set<"zero-coverage" | "risk-high" | "has-findings">
   >(new Set());
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const pathname = usePathname();
   const router = useRouter();
   const setGlobalSearchOpen = useUIStore((s) => s.setGlobalSearchOpen);
@@ -186,10 +187,35 @@ export function Sidebar({
         e.name.toLowerCase().includes(q) ||
         e.primary_ip.toLowerCase().includes(q) ||
         (e.primary_hostname?.toLowerCase().includes(q) ?? false) ||
+        (e.vpn_ip?.toLowerCase().includes(q) ?? false) ||
         e.tags.some((t) => t.includes(q))
       );
     });
   }, [filter, engagements, viewMode, selectedTags, bulkFilters]);
+
+  const grouped = useMemo(() => {
+    const groups = new Map<string, typeof filtered>();
+    const ungrouped: typeof filtered = [];
+    for (const e of filtered) {
+      if (e.vpn_ip) {
+        const arr = groups.get(e.vpn_ip);
+        if (arr) arr.push(e);
+        else groups.set(e.vpn_ip, [e]);
+      } else {
+        ungrouped.push(e);
+      }
+    }
+    return { groups, ungrouped };
+  }, [filtered]);
+
+  function toggleGroup(vpnIp: string) {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(vpnIp)) next.delete(vpnIp);
+      else next.add(vpnIp);
+      return next;
+    });
+  }
 
   function toggleBulk(key: "zero-coverage" | "risk-high" | "has-findings") {
     setBulkFilters((prev) => {
@@ -431,7 +457,64 @@ export function Sidebar({
           </p>
         ) : (
           <ul>
-            {filtered.map((e) => {
+            {Array.from(grouped.groups.entries()).map(([vpnIp, items]) => {
+              const isCollapsed = collapsedGroups.has(vpnIp);
+              return (
+                <li key={`vpn-${vpnIp}`}>
+                  <button
+                    onClick={() => toggleGroup(vpnIp)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      width: "100%",
+                      padding: "6px 10px",
+                      border: "none",
+                      background: "transparent",
+                      cursor: "pointer",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "var(--fg-subtle)",
+                      letterSpacing: "0.01em",
+                    }}
+                  >
+                    <Globe size={11} style={{ flexShrink: 0, opacity: 0.7 }} />
+                    <span className="truncate" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                      {vpnIp}
+                    </span>
+                    <span style={{ fontSize: 10, opacity: 0.6 }}>{items.length}</span>
+                    <span style={{ fontSize: 9, opacity: 0.5 }}>{isCollapsed ? "▸" : "▾"}</span>
+                  </button>
+                  {!isCollapsed && (
+                    <ul style={{ paddingLeft: 8 }}>
+                      {items.map((e) => {
+                        const href = `/engagements/${e.id}`;
+                        const active = pathname === href;
+                        return (
+                          <li key={e.id}>
+                            <SidebarRow
+                              engagementId={e.id}
+                              href={href}
+                              active={active}
+                              name={e.name}
+                              ip={e.primary_ip}
+                              portCount={e.port_count}
+                              hostCount={e.host_count}
+                              createdAt={e.created_at}
+                              done={e.done}
+                              total={e.total}
+                              tags={e.tags}
+                              isArchived={e.is_archived}
+                            />
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
+            {grouped.ungrouped.map((e) => {
               const href = `/engagements/${e.id}`;
               const active = pathname === href;
               return (

@@ -19,7 +19,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { importAutoRecon } from "@/lib/importer/autorecon";
-import { db, createFromScan, findEngagementBySubnet, rescanEngagement } from "@/lib/db";
+import { db, createFromScan, findEngagementBySubnet, rescanEngagement, engagements } from "@/lib/db";
+import { eq } from "drizzle-orm";
 import { parseNmapXml } from "@/lib/parser";
 
 // D-11: 50 MB max upload size (typical AutoRecon zips are 2-25 MB)
@@ -96,13 +97,17 @@ export async function POST(request: NextRequest) {
   // instead of creating a new one. Operator data (creds/notes/defenses/sector)
   // is preserved — only host/port scan data is refreshed.
   const subnet = request.nextUrl.searchParams.get("subnet");
-  const existingId = subnet ? findEngagementBySubnet(db, subnet) : null;
+  const vpnIp = request.nextUrl.searchParams.get("vpn_ip");
+  const existingId = subnet ? findEngagementBySubnet(db, subnet, vpnIp) : null;
 
   let resultId: number;
   try {
     if (existingId) {
       rescanEngagement(db, existingId, importResult.scan, file.name);
       resultId = existingId;
+      if (vpnIp) {
+        db.update(engagements).set({ vpn_ip: vpnIp }).where(eq(engagements.id, resultId)).run();
+      }
     } else {
       const created = createFromScan(db, importResult.scan, file.name, {
         arFiles: importResult.arFiles,
@@ -110,10 +115,13 @@ export async function POST(request: NextRequest) {
         arArtifacts: importResult.arArtifacts,
       });
       resultId = created.id;
-      // If subnet tag provided but no existing engagement found, rename to subnet
       if (subnet) {
         const { renameEngagement } = await import("@/lib/db");
-        renameEngagement(db, resultId, subnet);
+        const label = vpnIp ? `${subnet} (via ${vpnIp})` : subnet;
+        renameEngagement(db, resultId, label);
+      }
+      if (vpnIp) {
+        db.update(engagements).set({ vpn_ip: vpnIp }).where(eq(engagements.id, resultId)).run();
       }
     }
   } catch (err) {
